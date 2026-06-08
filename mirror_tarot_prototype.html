@@ -1,0 +1,954 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=380, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+--ink:#0a0710;--ink2:#1a1225;--ink3:#241a33;
+--gold:#c9a84c;--gold2:#e8c97a;--gold3:#f5e4a8;
+--purple:#7c3aed;--purple2:#9d5cf5;--purple3:#c4a0ff;
+--mist:#a89cc0;--mist2:#d4cde8;--mist3:#ede9f5;
+--card-bg:#130d1f;--surface:#1e1630;--surface2:#2a1f42;
+font-family:'DM Sans',sans-serif;
+}
+body{background:var(--ink);color:var(--mist2);overflow:hidden;width:380px;height:700px;position:relative;}
+h1,h2,h3,.serif{font-family:'Cormorant Garamond',serif;}
+
+/* PHONE FRAME */
+.phone{width:375px;height:700px;position:relative;overflow:hidden;background:var(--ink);}
+.screen{width:100%;height:100%;position:absolute;top:0;left:0;display:none;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* STATUS BAR */
+.status-bar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;position:relative;z-index:10;}
+.status-time{font-size:15px;font-weight:500;color:var(--mist2);}
+.status-icons{display:flex;gap:6px;align-items:center;color:var(--mist2);font-size:12px;}
+
+/* BOTTOM NAV */
+.bottom-nav{height:83px;background:rgba(19,13,31,0.95);border-top:0.5px solid rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:space-around;padding-bottom:20px;flex-shrink:0;position:relative;z-index:10;backdrop-filter:blur(20px);}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 12px;border-radius:12px;transition:all .2s;}
+.nav-item.active .nav-icon{color:var(--gold);}
+.nav-item.active .nav-label{color:var(--gold);}
+.nav-icon{font-size:22px;color:var(--mist);transition:color .2s;}
+.nav-label{font-size:10px;color:var(--mist);letter-spacing:0.5px;font-weight:500;transition:color .2s;}
+
+/* SCROLLABLE CONTENT */
+.scroll-content{flex:1;overflow-y:auto;overflow-x:hidden;}
+.scroll-content::-webkit-scrollbar{display:none;}
+
+/* STAR BACKGROUND */
+.stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.1}50%{opacity:.8}}
+
+/* BUTTONS */
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:500;font-size:16px;border:none;border-radius:16px;padding:16px 24px;width:100%;cursor:pointer;letter-spacing:0.3px;transition:transform .15s,opacity .15s;}
+.btn-primary:active{transform:scale(0.97);opacity:0.9;}
+.btn-secondary{background:transparent;color:var(--mist2);font-family:'DM Sans',sans-serif;font-weight:400;font-size:15px;border:0.5px solid rgba(201,168,76,0.3);border-radius:16px;padding:14px 24px;width:100%;cursor:pointer;transition:all .15s;}
+.btn-secondary:active{background:rgba(201,168,76,0.08);}
+.btn-ghost{background:transparent;color:var(--mist);font-family:'DM Sans',sans-serif;font-size:14px;border:none;cursor:pointer;padding:8px;}
+
+/* CARD COMPONENT */
+.tarot-card{background:linear-gradient(145deg,#1e1035,#120820);border:1px solid rgba(201,168,76,0.25);border-radius:16px;position:relative;overflow:hidden;cursor:pointer;}
+.tarot-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,0.05),transparent);pointer-events:none;}
+
+/* SECTION LABEL */
+.section-label{font-size:11px;font-weight:500;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;}
+
+/* GOLD DIVIDER */
+.gold-line{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto;}
+
+/* INPUT */
+.mystical-input{background:rgba(255,255,255,0.04);border:0.5px solid rgba(201,168,76,0.2);border-radius:14px;padding:14px 18px;color:var(--mist2);font-family:'DM Sans',sans-serif;font-size:15px;width:100%;outline:none;transition:border-color .2s;}
+.mystical-input:focus{border-color:rgba(201,168,76,0.5);}
+.mystical-input::placeholder{color:var(--mist);}
+
+/* CHIP */
+.chip{background:rgba(201,168,76,0.08);border:0.5px solid rgba(201,168,76,0.25);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--mist2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.chip.selected{background:rgba(201,168,76,0.18);border-color:var(--gold);color:var(--gold2);}
+
+/* CARD BACK PATTERN */
+@keyframes cardReveal{from{transform:rotateY(90deg) scale(0.8);opacity:0}to{transform:rotateY(0) scale(1);opacity:1}}
+.reveal-anim{animation:cardReveal .6s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.float-anim{animation:float 4s ease-in-out infinite;}
+
+/* GLOW */
+.gold-glow{box-shadow:0 0 40px rgba(201,168,76,0.15),0 0 80px rgba(124,58,237,0.1);}
+.purple-glow{box-shadow:0 0 30px rgba(124,58,237,0.3);}
+
+/* PROGRESS DOTS */
+.progress-dots{display:flex;gap:8px;justify-content:center;}
+.dot{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,0.15);transition:all .3s;}
+.dot.active{width:20px;background:var(--gold);}
+
+/* BACK ARROW */
+.back-btn{background:rgba(255,255,255,0.05);border:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mist2);font-size:18px;}
+
+/* INSIGHT CARD */
+.insight-card{background:rgba(124,58,237,0.08);border:0.5px solid rgba(124,58,237,0.25);border-radius:16px;padding:20px;}
+
+/* JOURNAL CARD */
+.journal-entry{background:var(--surface);border:0.5px solid rgba(201,168,76,0.1);border-radius:14px;padding:16px;margin-bottom:12px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold2);}
+
+/* STREAK */
+.streak-fire{font-size:20px;}
+
+/* MOON */
+.moon-decoration{position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(201,168,76,0.12),transparent 70%);pointer-events:none;}
+
+/* PROGRESS BAR */
+.progress-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:2px;transition:width .5s;}
+
+/* SUBSCRIPTION CARD */
+.plan-card{border-radius:20px;padding:20px;cursor:pointer;border:1.5px solid transparent;transition:all .2s;position:relative;overflow:hidden;}
+.plan-card.free{background:var(--surface);border-color:rgba(255,255,255,0.08);}
+.plan-card.premium{background:linear-gradient(145deg,#1f1040,#150d2a);border-color:var(--gold);}
+.plan-card.premium::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+
+/* GLYPH */
+.glyph{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);opacity:0.6;}
+
+.ornament{color:var(--gold);opacity:0.4;font-size:18px;font-family:'Cormorant Garamond',serif;}
+</style>
+</head>
+<body>
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Mirror Tarot — Interactive prototype with clickable screens including onboarding, home, readings, journal, insights, and subscription</h2>
+
+<div class="phone">
+
+<!-- ═══ WELCOME SCREEN ═══ -->
+<div class="screen active" id="screen-welcome">
+  <div class="stars" id="stars-welcome"></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;position:relative;z-index:1;">
+    <div class="moon-decoration"></div>
+    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(145deg,var(--purple),var(--ink3));border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:32px;" class="gold-glow float-anim">
+      <span style="font-size:36px;">☽</span>
+    </div>
+    <h1 style="font-size:42px;font-weight:300;color:var(--mist3);letter-spacing:2px;text-align:center;margin-bottom:8px;line-height:1.1;">Mirror</h1>
+    <h1 style="font-size:42px;font-weight:600;color:var(--gold2);letter-spacing:2px;text-align:center;margin-bottom:16px;line-height:1.1;">Tarot</h1>
+    <p style="font-size:14px;color:var(--mist);text-align:center;letter-spacing:1px;line-height:1.7;max-width:240px;">A daily practice for self-reflection through the wisdom of archetypes</p>
+    <div class="gold-line"></div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:100%;margin-top:8px;">
+      <button class="btn-primary" onclick="goto('screen-onboard1')">Begin Your Journey</button>
+      <button class="btn-ghost" onclick="goto('screen-login')" style="color:var(--mist);">I already have an account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARD 1 ═══ -->
+<div class="screen" id="screen-onboard1">
+  <div class="stars" id="stars-ob1"></div>
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:24px 28px 32px;position:relative;z-index:1;">
+    <div style="display:flex;justify-content:flex-end;"><button class="btn-ghost" onclick="goto('screen-login')" style="color:var(--mist);">Skip</button></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      <div style="font-size:64px;margin-bottom:24px;">🌙</div>
+      <h2 style="font-size:28px;font-weight:400;color:var(--mist3);line-height:1.3;margin-bottom:16px;">Not fortune-telling.<br/><em style="color:var(--gold2);">Self-knowing.</em></h2>
+      <p style="font-size:15px;color:var(--mist);line-height:1.7;max-width:280px;">Mirror uses Tarot's 78 archetypes as psychological lenses — not to predict your future, but to illuminate your inner world.</p>
+    </div>
+    <div class="progress-dots" style="margin-bottom:24px;">
+      <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <button class="btn-primary" onclick="goto('screen-onboard2')">Continue</button>
+  </div>
+</div>
+
+<!-- ═══ ONBOARD 2 ═══ -->
+<div class="screen" id="screen-onboard2">
+  <div class="stars" id="stars-ob2"></div>
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:24px 28px 32px;position:relative;z-index:1;">
+    <div style="display:flex;justify-content:flex-end;"><button class="btn-ghost" onclick="goto('screen-login')">Skip</button></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      <div style="font-size:64px;margin-bottom:24px;">✦</div>
+      <h2 style="font-size:28px;font-weight:400;color:var(--mist3);line-height:1.3;margin-bottom:16px;">Ask. Reflect.<br/><em style="color:var(--gold2);">Understand.</em></h2>
+      <p style="font-size:15px;color:var(--mist);line-height:1.7;max-width:280px;">Ask a question that's on your mind. Draw cards. Receive personalized AI reflections and journaling prompts rooted in Jungian archetypes.</p>
+    </div>
+    <div class="progress-dots" style="margin-bottom:24px;">
+      <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+    </div>
+    <button class="btn-primary" onclick="goto('screen-onboard3')">Continue</button>
+  </div>
+</div>
+
+<!-- ═══ ONBOARD 3 ═══ -->
+<div class="screen" id="screen-onboard3">
+  <div class="stars" id="stars-ob3"></div>
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="flex:1;display:flex;flex-direction:column;padding:24px 28px 32px;position:relative;z-index:1;">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      <div style="font-size:64px;margin-bottom:24px;">◈</div>
+      <h2 style="font-size:28px;font-weight:400;color:var(--mist3);line-height:1.3;margin-bottom:16px;">Grow over<br/><em style="color:var(--gold2);">time.</em></h2>
+      <p style="font-size:15px;color:var(--mist);line-height:1.7;max-width:280px;">Mirror learns your patterns, tracks your emotional cycles, and delivers monthly growth reports that show you how you've evolved.</p>
+      <div class="gold-line"></div>
+      <div style="display:flex;gap:24px;justify-content:center;margin-top:8px;">
+        <div style="text-align:center;"><div style="font-size:22px;color:var(--gold);font-weight:600;font-family:'Cormorant Garamond',serif;">78</div><div style="font-size:11px;color:var(--mist);letter-spacing:0.5px;">Archetypes</div></div>
+        <div style="text-align:center;"><div style="font-size:22px;color:var(--gold);font-weight:600;font-family:'Cormorant Garamond',serif;">AI</div><div style="font-size:11px;color:var(--mist);letter-spacing:0.5px;">Memory</div></div>
+        <div style="text-align:center;"><div style="font-size:22px;color:var(--gold);font-weight:600;font-family:'Cormorant Garamond',serif;">∞</div><div style="font-size:11px;color:var(--mist);letter-spacing:0.5px;">Reflections</div></div>
+      </div>
+    </div>
+    <div class="progress-dots" style="margin-bottom:24px;">
+      <div class="dot"></div><div class="dot"></div><div class="dot active"></div>
+    </div>
+    <button class="btn-primary" onclick="goto('screen-signup')">Create My Account</button>
+  </div>
+</div>
+
+<!-- ═══ SIGN UP ═══ -->
+<div class="screen" id="screen-signup">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div class="scroll-content" style="padding:20px 28px 40px;">
+    <div style="margin-bottom:28px;">
+      <h2 style="font-size:26px;font-weight:400;color:var(--mist3);">Begin your<br/><em style="color:var(--gold2);">practice</em></h2>
+      <p style="font-size:13px;color:var(--mist);margin-top:8px;">Free forever. No credit card required.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px;">
+      <input class="mystical-input" type="text" placeholder="Your name">
+      <input class="mystical-input" type="email" placeholder="Email address">
+      <input class="mystical-input" type="password" placeholder="Create password">
+    </div>
+    <div style="margin-bottom:24px;">
+      <p style="font-size:13px;color:var(--mist);margin-bottom:12px;">What brings you to Mirror?</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="intent-chips">
+        <div class="chip" onclick="toggleChip(this)">Self-reflection</div>
+        <div class="chip" onclick="toggleChip(this)">Journaling</div>
+        <div class="chip" onclick="toggleChip(this)">Spirituality</div>
+        <div class="chip" onclick="toggleChip(this)">Personal growth</div>
+        <div class="chip" onclick="toggleChip(this)">Astrology lover</div>
+        <div class="chip" onclick="toggleChip(this)">Tarot curious</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goto('screen-home')" style="margin-bottom:12px;">Create Account</button>
+    <div style="text-align:center;font-size:12px;color:var(--mist);line-height:1.6;">By continuing, you agree to our Terms &amp; Privacy Policy</div>
+    <div style="margin-top:20px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;height:0.5px;background:rgba(255,255,255,0.1);"></div>
+      <span style="font-size:12px;color:var(--mist);">or</span>
+      <div style="flex:1;height:0.5px;background:rgba(255,255,255,0.1);"></div>
+    </div>
+    <button class="btn-secondary" style="margin-top:12px;">Continue with Apple</button>
+    <button class="btn-secondary" style="margin-top:10px;">Continue with Google</button>
+  </div>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="screen" id="screen-login">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:20px 28px 40px;">
+    <div style="margin-bottom:28px;">
+      <h2 style="font-size:26px;font-weight:400;color:var(--mist3);">Welcome<br/><em style="color:var(--gold2);">back</em></h2>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px;">
+      <input class="mystical-input" type="email" placeholder="Email address">
+      <input class="mystical-input" type="password" placeholder="Password">
+    </div>
+    <button class="btn-primary" onclick="goto('screen-home')" style="margin-bottom:16px;">Sign In</button>
+    <button class="btn-ghost" style="display:block;width:100%;text-align:center;color:var(--mist);">Forgot password?</button>
+    <div style="margin-top:20px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;height:0.5px;background:rgba(255,255,255,0.1);"></div><span style="font-size:12px;color:var(--mist);">or</span><div style="flex:1;height:0.5px;background:rgba(255,255,255,0.1);"></div>
+    </div>
+    <button class="btn-secondary" style="margin-top:12px;">Continue with Apple</button>
+    <div style="margin-top:16px;text-align:center;font-size:13px;color:var(--mist);">No account? <span style="color:var(--gold2);cursor:pointer;" onclick="goto('screen-signup')">Create one free</span></div>
+  </div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="screen" id="screen-home">
+  <div class="status-bar" style="position:relative;z-index:10;"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div class="scroll-content" style="padding:0 20px 20px;">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <p style="font-size:12px;color:var(--mist);letter-spacing:1px;margin-bottom:2px;">MONDAY, JUNE 8</p>
+        <h2 style="font-size:22px;font-weight:400;color:var(--mist3);">Good morning, <em style="color:var(--gold2);">Luna</em></h2>
+      </div>
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,var(--purple2),var(--purple));border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="goto('screen-profile')">
+        <span style="color:var(--gold2);font-size:18px;">☽</span>
+      </div>
+    </div>
+
+    <!-- Daily Card -->
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Daily Card</p>
+      <div class="tarot-card gold-glow" onclick="goto('screen-reading')" style="padding:20px;display:flex;gap:16px;align-items:center;">
+        <div style="width:72px;height:108px;border-radius:10px;background:linear-gradient(145deg,#2d1b69,#1a0d3a);border:1px solid rgba(201,168,76,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(201,168,76,0.04) 0,rgba(201,168,76,0.04) 1px,transparent 1px,transparent 8px);"></div>
+          <span style="font-size:28px;position:relative;z-index:1;">☽</span>
+        </div>
+        <div style="flex:1;">
+          <div class="badge" style="margin-bottom:8px;font-size:11px;">✦ Today's Archetype</div>
+          <h3 style="font-size:19px;font-weight:400;color:var(--mist3);font-family:'Cormorant Garamond',serif;margin-bottom:6px;">The High Priestess</h3>
+          <p style="font-size:13px;color:var(--mist);line-height:1.5;">Intuition calls. What do you already know but haven't yet said aloud?</p>
+          <p style="font-size:12px;color:var(--gold);margin-top:10px;letter-spacing:0.5px;">Tap to reflect →</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streak & Stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+      <div style="background:var(--surface);border-radius:16px;padding:16px;border:0.5px solid rgba(201,168,76,0.1);">
+        <div style="font-size:11px;color:var(--mist);letter-spacing:1px;margin-bottom:6px;">STREAK</div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span style="font-size:28px;font-family:'Cormorant Garamond',serif;color:var(--gold2);">7</span>
+          <span style="font-size:20px;">🔥</span>
+        </div>
+        <div style="font-size:12px;color:var(--mist);">days in a row</div>
+      </div>
+      <div style="background:var(--surface);border-radius:16px;padding:16px;border:0.5px solid rgba(201,168,76,0.1);">
+        <div style="font-size:11px;color:var(--mist);letter-spacing:1px;margin-bottom:6px;">READINGS</div>
+        <div style="display:flex;align-items:baseline;gap:4px;">
+          <span style="font-size:28px;font-family:'Cormorant Garamond',serif;color:var(--purple3);">23</span>
+        </div>
+        <div style="font-size:12px;color:var(--mist);">this month</div>
+      </div>
+    </div>
+
+    <!-- AI Insight Banner -->
+    <div style="margin-bottom:24px;">
+      <p class="section-label">AI Insight</p>
+      <div class="insight-card" onclick="goto('screen-insights')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:24px;flex-shrink:0;">✦</span>
+          <div>
+            <p style="font-size:14px;color:var(--mist2);line-height:1.6;font-style:italic;font-family:'Cormorant Garamond',serif;">"The Empress and The Moon have appeared 4 times this week — a pattern of deep feminine intuition calling for attention."</p>
+            <p style="font-size:12px;color:var(--purple3);margin-top:8px;">See full insight →</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continue Reflection -->
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Continue Reflection</p>
+      <div style="background:var(--surface);border-radius:16px;padding:16px;border:0.5px solid rgba(255,255,255,0.06);cursor:pointer;" onclick="goto('screen-journal')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <p style="font-size:13px;color:var(--mist2);">Yesterday's reading — The Tower</p>
+            <p style="font-size:12px;color:var(--mist);">2 reflection prompts unanswered</p>
+          </div>
+          <span style="color:var(--mist);font-size:18px;">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Reading CTA -->
+    <button class="btn-primary" onclick="goto('screen-new-reading')" style="display:flex;align-items:center;justify-content:center;gap:10px;">
+      <span style="font-size:18px;">✦</span> Draw Cards
+    </button>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active"><div class="nav-icon">⌂</div><div class="nav-label">Home</div></div>
+    <div class="nav-item" onclick="goto('screen-readings')"><div class="nav-icon">⊞</div><div class="nav-label">Readings</div></div>
+    <div class="nav-item" onclick="goto('screen-journal')"><div class="nav-icon">✎</div><div class="nav-label">Journal</div></div>
+    <div class="nav-item" onclick="goto('screen-insights')"><div class="nav-icon">◈</div><div class="nav-label">Insights</div></div>
+    <div class="nav-item" onclick="goto('screen-profile')"><div class="nav-icon">☽</div><div class="nav-label">You</div></div>
+  </div>
+</div>
+
+<!-- ═══ NEW READING ═══ -->
+<div class="screen" id="screen-new-reading">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 8px;display:flex;align-items:center;gap:12px;">
+    <button class="back-btn" onclick="goto('screen-home')">‹</button>
+    <h2 style="font-size:18px;font-weight:400;color:var(--mist3);">New Reading</h2>
+  </div>
+  <div class="scroll-content" style="padding:16px 20px 40px;">
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Your Question</p>
+      <textarea class="mystical-input" rows="3" placeholder="What's weighing on your heart? (e.g. 'How can I find more clarity in my relationship?')" style="resize:none;line-height:1.6;"></textarea>
+      <p style="font-size:12px;color:var(--mist);margin-top:8px;">The more honest, the deeper the reflection.</p>
+    </div>
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Area of Life</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="area-chips">
+        <div class="chip selected" onclick="toggleChip(this)">Love & Relationships</div>
+        <div class="chip" onclick="toggleChip(this)">Career & Purpose</div>
+        <div class="chip" onclick="toggleChip(this)">Inner Self</div>
+        <div class="chip" onclick="toggleChip(this)">Family</div>
+        <div class="chip" onclick="toggleChip(this)">Creativity</div>
+        <div class="chip" onclick="toggleChip(this)">Finances</div>
+        <div class="chip" onclick="toggleChip(this)">Health</div>
+      </div>
+    </div>
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Current Mood</p>
+      <div style="display:flex;gap:10px;justify-content:space-between;">
+        <div style="text-align:center;cursor:pointer;" onclick="selectMood(this)">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:0.5px solid rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:4px;transition:all .2s;">😰</div>
+          <div style="font-size:10px;color:var(--mist);">Anxious</div>
+        </div>
+        <div style="text-align:center;cursor:pointer;" onclick="selectMood(this)">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:0.5px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:4px;transition:all .2s;">😐</div>
+          <div style="font-size:10px;color:var(--mist);">Neutral</div>
+        </div>
+        <div style="text-align:center;cursor:pointer;" onclick="selectMood(this)">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(201,168,76,0.12);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:4px;transition:all .2s;">🤔</div>
+          <div style="font-size:10px;color:var(--gold);">Reflective</div>
+        </div>
+        <div style="text-align:center;cursor:pointer;" onclick="selectMood(this)">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:0.5px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:4px;transition:all .2s;">😔</div>
+          <div style="font-size:10px;color:var(--mist);">Sad</div>
+        </div>
+        <div style="text-align:center;cursor:pointer;" onclick="selectMood(this)">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:0.5px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:4px;transition:all .2s;">✨</div>
+          <div style="font-size:10px;color:var(--mist);">Inspired</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:24px;">
+      <p class="section-label">Spread Type</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:rgba(201,168,76,0.08);border:1.5px solid var(--gold);border-radius:14px;padding:14px;text-align:center;cursor:pointer;">
+          <div style="font-size:24px;margin-bottom:6px;">☽</div>
+          <div style="font-size:13px;color:var(--gold2);font-weight:500;">Single Card</div>
+          <div style="font-size:11px;color:var(--mist);margin-top:2px;">Quick clarity</div>
+        </div>
+        <div style="background:var(--surface);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;text-align:center;cursor:pointer;" onclick="goto('screen-reveal')">
+          <div style="font-size:24px;margin-bottom:6px;">✦ ✦ ✦</div>
+          <div style="font-size:13px;color:var(--mist2);font-weight:500;">Three Card</div>
+          <div style="font-size:11px;color:var(--mist);margin-top:2px;">Past · Present · Future</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goto('screen-reveal')" style="display:flex;align-items:center;justify-content:center;gap:10px;">
+      <span style="font-size:20px;">✦</span> Draw Cards
+    </button>
+  </div>
+</div>
+
+<!-- ═══ CARD REVEAL ═══ -->
+<div class="screen" id="screen-reveal">
+  <div class="stars" id="stars-reveal"></div>
+  <div class="status-bar" style="position:relative;z-index:2;"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 8px;display:flex;align-items:center;gap:12px;position:relative;z-index:2;">
+    <button class="back-btn" onclick="goto('screen-new-reading')">‹</button>
+    <h2 style="font-size:18px;font-weight:400;color:var(--mist3);">Your Reading</h2>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;padding:0 20px;">
+    <p style="font-size:13px;color:var(--mist);letter-spacing:1px;margin-bottom:32px;">Love &amp; Relationships · Reflective</p>
+    <div style="display:flex;gap:14px;justify-content:center;margin-bottom:32px;" id="card-spread">
+      <div style="text-align:center;" id="card1">
+        <div class="tarot-card reveal-anim" style="width:95px;height:148px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;animation-delay:0.1s;position:relative;" onclick="goto('screen-interpretation')">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(201,168,76,0.04) 0,rgba(201,168,76,0.04) 1px,transparent 1px,transparent 8px);border-radius:16px;"></div>
+          <span style="font-size:32px;position:relative;z-index:1;">☽</span>
+          <span style="font-size:11px;color:var(--gold);letter-spacing:0.5px;font-weight:500;position:relative;z-index:1;">II</span>
+        </div>
+        <p style="font-size:10px;color:var(--mist);margin-top:8px;letter-spacing:0.5px;">PAST</p>
+        <p style="font-size:12px;color:var(--mist2);margin-top:2px;font-family:'Cormorant Garamond',serif;">High Priestess</p>
+      </div>
+      <div style="text-align:center;margin-top:-12px;" id="card2">
+        <div class="tarot-card reveal-anim gold-glow" style="width:105px;height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;animation-delay:0.35s;border-color:rgba(201,168,76,0.45);position:relative;" onclick="goto('screen-interpretation')">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(201,168,76,0.06) 0,rgba(201,168,76,0.06) 1px,transparent 1px,transparent 8px);border-radius:16px;"></div>
+          <span style="font-size:36px;position:relative;z-index:1;">🌙</span>
+          <span style="font-size:11px;color:var(--gold);letter-spacing:0.5px;font-weight:500;position:relative;z-index:1;">XVIII</span>
+        </div>
+        <p style="font-size:10px;color:var(--gold);margin-top:8px;letter-spacing:0.5px;">PRESENT</p>
+        <p style="font-size:12px;color:var(--gold2);margin-top:2px;font-family:'Cormorant Garamond',serif;">The Moon</p>
+      </div>
+      <div style="text-align:center;" id="card3">
+        <div class="tarot-card reveal-anim" style="width:95px;height:148px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;animation-delay:0.6s;position:relative;" onclick="goto('screen-interpretation')">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(201,168,76,0.04) 0,rgba(201,168,76,0.04) 1px,transparent 1px,transparent 8px);border-radius:16px;"></div>
+          <span style="font-size:32px;position:relative;z-index:1;">⭐</span>
+          <span style="font-size:11px;color:var(--gold);letter-spacing:0.5px;font-weight:500;position:relative;z-index:1;">XVII</span>
+        </div>
+        <p style="font-size:10px;color:var(--mist);margin-top:8px;letter-spacing:0.5px;">POTENTIAL</p>
+        <p style="font-size:12px;color:var(--mist2);margin-top:2px;font-family:'Cormorant Garamond',serif;">The Star</p>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--mist);text-align:center;max-width:260px;line-height:1.6;margin-bottom:28px;font-style:italic;font-family:'Cormorant Garamond',serif;">"Your intuition has been leading you through uncertainty toward renewed hope."</p>
+    <button class="btn-primary" onclick="goto('screen-interpretation')" style="width:100%;max-width:300px;">Read My Interpretation</button>
+  </div>
+</div>
+
+<!-- ═══ AI INTERPRETATION ═══ -->
+<div class="screen" id="screen-interpretation">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 8px;display:flex;align-items:center;gap:12px;">
+    <button class="back-btn" onclick="goto('screen-reveal')">‹</button>
+    <h2 style="font-size:18px;font-weight:400;color:var(--mist3);">Interpretation</h2>
+    <div style="flex:1;"></div>
+    <button class="btn-ghost" onclick="goto('screen-journal')" style="font-size:13px;color:var(--gold);">Save ✦</button>
+  </div>
+  <div class="scroll-content" style="padding:12px 20px 40px;">
+    <!-- Card Row -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <div style="flex:1;background:var(--surface);border-radius:12px;padding:10px;text-align:center;border:0.5px solid rgba(201,168,76,0.1);">
+        <div style="font-size:22px;margin-bottom:2px;">☽</div>
+        <div style="font-size:10px;color:var(--gold);letter-spacing:0.5px;">PAST</div>
+        <div style="font-size:11px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">High Priestess</div>
+      </div>
+      <div style="flex:1;background:rgba(201,168,76,0.08);border-radius:12px;padding:10px;text-align:center;border:0.5px solid rgba(201,168,76,0.25);">
+        <div style="font-size:22px;margin-bottom:2px;">🌙</div>
+        <div style="font-size:10px;color:var(--gold);letter-spacing:0.5px;">PRESENT</div>
+        <div style="font-size:11px;color:var(--gold2);font-family:'Cormorant Garamond',serif;">The Moon</div>
+      </div>
+      <div style="flex:1;background:var(--surface);border-radius:12px;padding:10px;text-align:center;border:0.5px solid rgba(201,168,76,0.1);">
+        <div style="font-size:22px;margin-bottom:2px;">⭐</div>
+        <div style="font-size:10px;color:var(--gold);letter-spacing:0.5px;">POTENTIAL</div>
+        <div style="font-size:11px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">The Star</div>
+      </div>
+    </div>
+
+    <!-- Personalized Reading -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Your Reflection</p>
+      <div style="background:var(--surface);border-radius:16px;padding:18px;border:0.5px solid rgba(201,168,76,0.1);">
+        <p style="font-size:15px;color:var(--mist2);line-height:1.8;font-family:'Cormorant Garamond',serif;font-style:italic;">"The High Priestess in your past speaks to a deep knowing you've long carried but perhaps suppressed. You trusted your gut — and you were right to. The Moon now illuminates the foggy middle: you're navigating deep emotional terrain, and the confusion you feel isn't a sign of being lost. It's the feeling of moving through something real. The Star whispers of hope not as wishful thinking, but as the natural light that returns after darkness. Your clarity is coming."</p>
+      </div>
+    </div>
+
+    <!-- Card Meanings -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Archetype Meanings</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--surface);border-radius:14px;padding:14px;border:0.5px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;font-weight:500;">The High Priestess</span>
+            <span class="badge" style="font-size:10px;">Intuition</span>
+          </div>
+          <p style="font-size:13px;color:var(--mist);line-height:1.6;">Inner knowing, sacred feminine wisdom, the voice you hear in silence. What you knew without being told.</p>
+        </div>
+        <div style="background:var(--surface);border-radius:14px;padding:14px;border:0.5px solid rgba(201,168,76,0.15);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;font-weight:500;">The Moon</span>
+            <span class="badge" style="font-size:10px;">Depth</span>
+          </div>
+          <p style="font-size:13px;color:var(--mist);line-height:1.6;">The subconscious, dreams, emotional truth, illusions. You are being invited to feel your way through.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reflection Prompts -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Reflection Prompts</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="insight-card" style="cursor:pointer;" onclick="goto('screen-journal')">
+          <p style="font-size:14px;color:var(--mist2);line-height:1.6;">✦ What have you been sensing but not yet saying aloud in this relationship?</p>
+        </div>
+        <div class="insight-card" style="cursor:pointer;" onclick="goto('screen-journal')">
+          <p style="font-size:14px;color:var(--mist2);line-height:1.6;">✦ Where in your life are you navigating by feeling rather than by facts — and is that serving you?</p>
+        </div>
+        <div class="insight-card" style="cursor:pointer;" onclick="goto('screen-journal')">
+          <p style="font-size:14px;color:var(--mist2);line-height:1.6;">✦ What small action would feel like stepping toward the light right now?</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <button class="btn-primary" onclick="goto('screen-journal')" style="margin-bottom:10px;">Write in My Journal</button>
+    <button class="btn-secondary" onclick="goto('screen-home')">Back to Home</button>
+  </div>
+</div>
+
+<!-- ═══ JOURNAL ═══ -->
+<div class="screen" id="screen-journal">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 16px;display:flex;align-items:center;gap:12px;">
+    <button class="back-btn" onclick="goto('screen-home')">‹</button>
+    <h2 style="font-size:18px;font-weight:400;color:var(--mist3);">Journal</h2>
+    <div style="flex:1;"></div>
+    <div class="badge">✦ 7 day streak</div>
+  </div>
+  <div class="scroll-content" style="padding:0 20px 40px;">
+    <!-- Current Entry -->
+    <div style="background:var(--surface2);border-radius:18px;padding:20px;margin-bottom:20px;border:0.5px solid rgba(201,168,76,0.15);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <p style="font-size:11px;color:var(--gold);letter-spacing:1px;">TODAY · THE MOON</p>
+          <p style="font-size:14px;color:var(--mist2);margin-top:2px;font-family:'Cormorant Garamond',serif;">Love &amp; Relationships</p>
+        </div>
+        <span style="font-size:22px;">🌙</span>
+      </div>
+      <textarea class="mystical-input" rows="4" placeholder="Begin writing... let your thoughts flow freely. There is no wrong answer here." style="resize:none;line-height:1.8;font-family:'Cormorant Garamond',serif;font-size:16px;border-color:rgba(201,168,76,0.2);"></textarea>
+      <!-- Emotion tags -->
+      <div style="margin-top:12px;">
+        <p style="font-size:11px;color:var(--mist);margin-bottom:8px;letter-spacing:0.5px;">HOW AM I FEELING</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div class="chip selected" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Uncertain</div>
+          <div class="chip" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Hopeful</div>
+          <div class="chip" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Confused</div>
+          <div class="chip" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Tender</div>
+          <div class="chip" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Calm</div>
+          <div class="chip" onclick="toggleChip(this)" style="font-size:12px;padding:6px 12px;">Anxious</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:16px;font-size:14px;padding:13px;">Save Reflection</button>
+    </div>
+
+    <!-- Past Entries -->
+    <p class="section-label">Previous Entries</p>
+    <div class="journal-entry" style="cursor:pointer;" onclick="goto('screen-interpretation')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <p style="font-size:11px;color:var(--gold);letter-spacing:0.5px;">JUNE 7 · THE TOWER</p>
+          <p style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">Career &amp; Purpose</p>
+        </div>
+        <span style="font-size:18px;">⚡</span>
+      </div>
+      <p style="font-size:13px;color:var(--mist);line-height:1.6;">"I've been avoiding the obvious truth for months. Today I finally admitted it to myself..."</p>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <div class="chip" style="font-size:11px;padding:4px 10px;pointer-events:none;">Clarity</div>
+        <div class="chip" style="font-size:11px;padding:4px 10px;pointer-events:none;">Fear</div>
+      </div>
+    </div>
+    <div class="journal-entry">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <p style="font-size:11px;color:var(--gold);letter-spacing:0.5px;">JUNE 5 · THE EMPRESS</p>
+          <p style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">Inner Self</p>
+        </div>
+        <span style="font-size:18px;">🌿</span>
+      </div>
+      <p style="font-size:13px;color:var(--mist);line-height:1.6;">"Something about the Empress felt deeply personal today. Abundance isn't about having more..."</p>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goto('screen-home')"><div class="nav-icon">⌂</div><div class="nav-label">Home</div></div>
+    <div class="nav-item" onclick="goto('screen-readings')"><div class="nav-icon">⊞</div><div class="nav-label">Readings</div></div>
+    <div class="nav-item active"><div class="nav-icon">✎</div><div class="nav-label">Journal</div></div>
+    <div class="nav-item" onclick="goto('screen-insights')"><div class="nav-icon">◈</div><div class="nav-label">Insights</div></div>
+    <div class="nav-item" onclick="goto('screen-profile')"><div class="nav-icon">☽</div><div class="nav-label">You</div></div>
+  </div>
+</div>
+
+<!-- ═══ READINGS ═══ -->
+<div class="screen" id="screen-readings">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 16px;">
+    <h2 style="font-size:22px;font-weight:400;color:var(--mist3);">Your <em style="color:var(--gold2);">Readings</em></h2>
+    <p style="font-size:13px;color:var(--mist);">23 readings this month</p>
+  </div>
+  <div class="scroll-content" style="padding:0 20px 40px;">
+    <div style="display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;">
+      <div class="chip selected" style="white-space:nowrap;">All</div>
+      <div class="chip" style="white-space:nowrap;">Love</div>
+      <div class="chip" style="white-space:nowrap;">Career</div>
+      <div class="chip" style="white-space:nowrap;">Inner Self</div>
+      <div class="chip" style="white-space:nowrap;">Saved</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="tarot-card" onclick="goto('screen-interpretation')" style="padding:16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
+        <div style="width:52px;height:76px;border-radius:8px;background:linear-gradient(145deg,#2d1b69,#1a0d3a);border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🌙</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <p style="font-size:11px;color:var(--gold);letter-spacing:0.5px;margin-bottom:4px;">TODAY</p>
+              <p style="font-size:15px;color:var(--mist3);font-family:'Cormorant Garamond',serif;">High Priestess · Moon · Star</p>
+            </div>
+            <span style="font-size:16px;color:var(--mist);">›</span>
+          </div>
+          <p style="font-size:12px;color:var(--mist);margin-top:4px;">Love &amp; Relationships · 3-card</p>
+          <p style="font-size:13px;color:var(--mist2);margin-top:6px;line-height:1.5;">"Navigating emotional depth toward renewed hope..."</p>
+        </div>
+      </div>
+      <div class="tarot-card" style="padding:16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;" onclick="goto('screen-interpretation')">
+        <div style="width:52px;height:76px;border-radius:8px;background:linear-gradient(145deg,#2d1b69,#1a0d3a);border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">⚡</div>
+        <div style="flex:1;">
+          <p style="font-size:11px;color:var(--gold);letter-spacing:0.5px;margin-bottom:4px;">JUNE 7</p>
+          <p style="font-size:15px;color:var(--mist3);font-family:'Cormorant Garamond',serif;">The Tower</p>
+          <p style="font-size:12px;color:var(--mist);margin-top:4px;">Career · Single card</p>
+          <p style="font-size:13px;color:var(--mist2);margin-top:6px;line-height:1.5;">"Necessary disruption as a catalyst for truth..."</p>
+        </div>
+      </div>
+      <div class="tarot-card" style="padding:16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;" onclick="goto('screen-interpretation')">
+        <div style="width:52px;height:76px;border-radius:8px;background:linear-gradient(145deg,#2d1b69,#1a0d3a);border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🌿</div>
+        <div style="flex:1;">
+          <p style="font-size:11px;color:var(--gold);letter-spacing:0.5px;margin-bottom:4px;">JUNE 5</p>
+          <p style="font-size:15px;color:var(--mist3);font-family:'Cormorant Garamond',serif;">The Empress · Ace of Cups · 6 of Swords</p>
+          <p style="font-size:12px;color:var(--mist);margin-top:4px;">Inner Self · 3-card</p>
+        </div>
+      </div>
+      <!-- Locked -->
+      <div style="background:rgba(124,58,237,0.06);border:0.5px dashed rgba(201,168,76,0.2);border-radius:16px;padding:16px;text-align:center;cursor:pointer;" onclick="goto('screen-subscription')">
+        <p style="font-size:20px;margin-bottom:6px;">✦</p>
+        <p style="font-size:13px;color:var(--mist2);">Unlock unlimited readings</p>
+        <p style="font-size:12px;color:var(--gold);margin-top:4px;">Go Premium →</p>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goto('screen-home')"><div class="nav-icon">⌂</div><div class="nav-label">Home</div></div>
+    <div class="nav-item active"><div class="nav-icon">⊞</div><div class="nav-label">Readings</div></div>
+    <div class="nav-item" onclick="goto('screen-journal')"><div class="nav-icon">✎</div><div class="nav-label">Journal</div></div>
+    <div class="nav-item" onclick="goto('screen-insights')"><div class="nav-icon">◈</div><div class="nav-label">Insights</div></div>
+    <div class="nav-item" onclick="goto('screen-profile')"><div class="nav-icon">☽</div><div class="nav-label">You</div></div>
+  </div>
+</div>
+
+<!-- ═══ INSIGHTS ═══ -->
+<div class="screen" id="screen-insights">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 16px;">
+    <h2 style="font-size:22px;font-weight:400;color:var(--mist3);">Your <em style="color:var(--gold2);">Patterns</em></h2>
+    <p style="font-size:13px;color:var(--mist);">June 2025 · 23 readings analysed</p>
+  </div>
+  <div class="scroll-content" style="padding:0 20px 40px;">
+    <!-- AI Summary -->
+    <div style="background:linear-gradient(145deg,rgba(124,58,237,0.12),rgba(12,8,20,0.8));border:0.5px solid rgba(124,58,237,0.3);border-radius:20px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:rgba(124,58,237,0.1);pointer-events:none;"></div>
+      <p style="font-size:11px;color:var(--purple3);letter-spacing:1.5px;margin-bottom:10px;">MONTHLY SYNTHESIS</p>
+      <p style="font-size:15px;color:var(--mist2);line-height:1.8;font-family:'Cormorant Garamond',serif;font-style:italic;">"June has been a month of turning inward. You've been wrestling with the tension between what you feel and what you know — and learning to trust that both can be true at once."</p>
+    </div>
+
+    <!-- Recurring Archetypes -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Most Frequent Archetypes</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌙</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <p style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">The Moon</p>
+              <p style="font-size:13px;color:var(--gold);">6×</p>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:80%;"></div></div>
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">☽</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <p style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">High Priestess</p>
+              <p style="font-size:13px;color:var(--gold);">4×</p>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:55%;"></div></div>
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:14px;padding:14px;display:flex;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌿</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <p style="font-size:14px;color:var(--mist2);font-family:'Cormorant Garamond',serif;">The Empress</p>
+              <p style="font-size:13px;color:var(--gold);">3×</p>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:38%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emotional Trend -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Emotional Trends</p>
+      <div style="background:var(--surface);border-radius:16px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+          <div style="text-align:center;"><div style="font-size:20px;">😰</div><div style="font-size:11px;color:var(--mist);margin-top:4px;">Anxious</div><div style="font-size:13px;color:var(--mist2);margin-top:2px;">34%</div></div>
+          <div style="text-align:center;"><div style="font-size:20px;">🤔</div><div style="font-size:11px;color:var(--mist);margin-top:4px;">Reflective</div><div style="font-size:13px;color:var(--gold2);margin-top:2px;">28%</div></div>
+          <div style="text-align:center;"><div style="font-size:20px;">😔</div><div style="font-size:11px;color:var(--mist);margin-top:4px;">Tender</div><div style="font-size:13px;color:var(--mist2);margin-top:2px;">22%</div></div>
+          <div style="text-align:center;"><div style="font-size:20px;">✨</div><div style="font-size:11px;color:var(--mist);margin-top:4px;">Inspired</div><div style="font-size:13px;color:var(--mist2);margin-top:2px;">16%</div></div>
+        </div>
+        <p style="font-size:13px;color:var(--mist);line-height:1.6;border-top:0.5px solid rgba(255,255,255,0.06);padding-top:12px;font-style:italic;font-family:'Cormorant Garamond',serif;">"Anxiety is lessening week by week — a sign of growing self-trust."</p>
+      </div>
+    </div>
+
+    <!-- Growth Observation -->
+    <div style="margin-bottom:20px;">
+      <p class="section-label">Growth Observations</p>
+      <div class="insight-card">
+        <p style="font-size:13px;color:var(--mist2);line-height:1.7;">✦ You've asked about relationships 8 times. The themes are shifting from fear of loss → toward self-worth. <em style="color:var(--gold2);">This is growth.</em></p>
+      </div>
+    </div>
+
+    <!-- Premium Lock -->
+    <div style="background:linear-gradient(145deg,rgba(201,168,76,0.08),rgba(124,58,237,0.08));border:0.5px solid rgba(201,168,76,0.2);border-radius:20px;padding:20px;text-align:center;cursor:pointer;" onclick="goto('screen-subscription')">
+      <p style="font-size:18px;margin-bottom:8px;">✦</p>
+      <p style="font-size:14px;color:var(--mist2);margin-bottom:4px;">Monthly Growth Report</p>
+      <p style="font-size:12px;color:var(--mist);margin-bottom:12px;">Deep analysis of your full journey, available on Premium</p>
+      <button class="btn-primary" style="padding:12px 24px;font-size:14px;width:auto;">Unlock Premium</button>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goto('screen-home')"><div class="nav-icon">⌂</div><div class="nav-label">Home</div></div>
+    <div class="nav-item" onclick="goto('screen-readings')"><div class="nav-icon">⊞</div><div class="nav-label">Readings</div></div>
+    <div class="nav-item" onclick="goto('screen-journal')"><div class="nav-icon">✎</div><div class="nav-label">Journal</div></div>
+    <div class="nav-item active"><div class="nav-icon">◈</div><div class="nav-label">Insights</div></div>
+    <div class="nav-item" onclick="goto('screen-profile')"><div class="nav-icon">☽</div><div class="nav-label">You</div></div>
+  </div>
+</div>
+
+<!-- ═══ SUBSCRIPTION ═══ -->
+<div class="screen" id="screen-subscription">
+  <div class="stars" id="stars-sub"></div>
+  <div class="status-bar" style="position:relative;z-index:2;"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div style="padding:0 20px 8px;position:relative;z-index:2;">
+    <button class="back-btn" onclick="goto('screen-home')">‹</button>
+  </div>
+  <div class="scroll-content" style="padding:8px 20px 40px;position:relative;z-index:2;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:40px;margin-bottom:12px;">✦</div>
+      <h2 style="font-size:26px;font-weight:400;color:var(--mist3);font-family:'Cormorant Garamond',serif;">Mirror <em style="color:var(--gold2);">Premium</em></h2>
+      <p style="font-size:14px;color:var(--mist);margin-top:8px;line-height:1.6;">Unlock the full depth of your practice</p>
+    </div>
+
+    <!-- Plans -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <div class="plan-card premium" style="cursor:pointer;">
+        <div style="position:absolute;top:12px;right:12px;background:var(--gold);color:var(--ink);font-size:10px;font-weight:600;padding:3px 10px;border-radius:10px;letter-spacing:0.5px;">BEST VALUE</div>
+        <p style="font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:4px;">YEARLY</p>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:6px;">
+          <span style="font-size:32px;font-family:'Cormorant Garamond',serif;color:var(--gold2);">$5.99</span>
+          <span style="font-size:14px;color:var(--mist);">/month</span>
+        </div>
+        <p style="font-size:13px;color:var(--mist);margin-bottom:14px;">Billed as $71.99/year · Save 40%</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--gold);">✦</span><span style="font-size:13px;color:var(--mist2);">Unlimited readings every day</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--gold);">✦</span><span style="font-size:13px;color:var(--mist2);">AI memory &amp; personalised insights</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--gold);">✦</span><span style="font-size:13px;color:var(--mist2);">Monthly growth reports</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--gold);">✦</span><span style="font-size:13px;color:var(--mist2);">Advanced spreads (Celtic Cross)</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--gold);">✦</span><span style="font-size:13px;color:var(--mist2);">Weekly email summaries</span></div>
+        </div>
+      </div>
+
+      <div class="plan-card" style="background:rgba(201,168,76,0.04);border-color:rgba(201,168,76,0.2);">
+        <p style="font-size:11px;color:var(--mist);letter-spacing:1px;margin-bottom:4px;">MONTHLY</p>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:6px;">
+          <span style="font-size:32px;font-family:'Cormorant Garamond',serif;color:var(--mist3);">$9.99</span>
+          <span style="font-size:14px;color:var(--mist);">/month</span>
+        </div>
+        <p style="font-size:13px;color:var(--mist);">All premium features</p>
+      </div>
+
+      <div class="plan-card free">
+        <p style="font-size:11px;color:var(--mist);letter-spacing:1px;margin-bottom:4px;">FREE</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--mist);">○</span><span style="font-size:13px;color:var(--mist);">3 readings per day</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--mist);">○</span><span style="font-size:13px;color:var(--mist);">Basic AI reflections</span></div>
+          <div style="display:flex;gap:10px;align-items:center;"><span style="color:var(--mist);">○</span><span style="font-size:13px;color:var(--mist);">Journal access</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="goto('screen-home')" style="margin-bottom:10px;">Start 7-Day Free Trial</button>
+    <p style="text-align:center;font-size:11px;color:var(--mist);line-height:1.6;">Cancel anytime. No charge until trial ends.</p>
+    <button class="btn-ghost" onclick="goto('screen-home')" style="display:block;width:100%;text-align:center;margin-top:8px;color:var(--mist);">Continue with Free</button>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="screen" id="screen-profile">
+  <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons">●●●</div></div>
+  <div class="scroll-content" style="padding:0 20px 40px;">
+    <div style="text-align:center;padding:20px 0 24px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(145deg,var(--purple),var(--ink3));border:1.5px solid rgba(201,168,76,0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:32px;">☽</div>
+      <h2 style="font-size:20px;font-weight:400;color:var(--mist3);">Luna</h2>
+      <p style="font-size:13px;color:var(--mist);">luna@example.com</p>
+      <div class="badge" style="margin:10px auto 0;display:inline-flex;">✦ Free Plan</div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px;">
+      <div style="background:var(--surface);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;color:var(--gold);font-family:'Cormorant Garamond',serif;">23</div>
+        <div style="font-size:10px;color:var(--mist);margin-top:4px;letter-spacing:0.5px;">READINGS</div>
+      </div>
+      <div style="background:var(--surface);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;color:var(--gold);font-family:'Cormorant Garamond',serif;">7🔥</div>
+        <div style="font-size:10px;color:var(--mist);margin-top:4px;letter-spacing:0.5px;">STREAK</div>
+      </div>
+      <div style="background:var(--surface);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;color:var(--gold);font-family:'Cormorant Garamond',serif;">12</div>
+        <div style="font-size:10px;color:var(--mist);margin-top:4px;letter-spacing:0.5px;">ENTRIES</div>
+      </div>
+    </div>
+
+    <!-- Premium CTA -->
+    <div style="background:linear-gradient(145deg,rgba(201,168,76,0.1),rgba(124,58,237,0.1));border:0.5px solid rgba(201,168,76,0.25);border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:24px;cursor:pointer;" onclick="goto('screen-subscription')">
+      <span style="font-size:28px;">✦</span>
+      <div style="flex:1;">
+        <p style="font-size:14px;color:var(--mist3);">Upgrade to Premium</p>
+        <p style="font-size:12px;color:var(--mist);">Unlock unlimited readings &amp; AI memory</p>
+      </div>
+      <span style="color:var(--gold);font-size:18px;">›</span>
+    </div>
+
+    <!-- Settings -->
+    <div style="background:var(--surface);border-radius:18px;overflow:hidden;border:0.5px solid rgba(255,255,255,0.06);">
+      <div style="padding:16px;border-bottom:0.5px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;cursor:pointer;">
+        <span style="font-size:14px;color:var(--mist2);">Daily card reminder</span>
+        <span style="font-size:13px;color:var(--gold);">8:00 AM</span>
+      </div>
+      <div style="padding:16px;border-bottom:0.5px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;cursor:pointer;">
+        <span style="font-size:14px;color:var(--mist2);">Notification preferences</span>
+        <span style="color:var(--mist);">›</span>
+      </div>
+      <div style="padding:16px;border-bottom:0.5px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;cursor:pointer;">
+        <span style="font-size:14px;color:var(--mist2);">Journal export</span>
+        <span style="color:var(--mist);">›</span>
+      </div>
+      <div style="padding:16px;display:flex;justify-content:space-between;cursor:pointer;">
+        <span style="font-size:14px;color:var(--mist2);">Sign out</span>
+        <span style="color:var(--mist);">›</span>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goto('screen-home')"><div class="nav-icon">⌂</div><div class="nav-label">Home</div></div>
+    <div class="nav-item" onclick="goto('screen-readings')"><div class="nav-icon">⊞</div><div class="nav-label">Readings</div></div>
+    <div class="nav-item" onclick="goto('screen-journal')"><div class="nav-icon">✎</div><div class="nav-label">Journal</div></div>
+    <div class="nav-item" onclick="goto('screen-insights')"><div class="nav-icon">◈</div><div class="nav-label">Insights</div></div>
+    <div class="nav-item active"><div class="nav-icon">☽</div><div class="nav-label">You</div></div>
+  </div>
+</div>
+
+</div>
+
+<!-- SCREEN LABEL -->
+<div id="screen-label" style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(201,168,76,0.5);letter-spacing:1px;pointer-events:none;z-index:100;white-space:nowrap;"></div>
+
+<script>
+function goto(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById(id);
+  if(t){t.classList.add('active');t.scrollTop=0;}
+  const labels={'screen-welcome':'Welcome','screen-onboard1':'Onboarding 1/3','screen-onboard2':'Onboarding 2/3','screen-onboard3':'Onboarding 3/3','screen-signup':'Sign Up','screen-login':'Login','screen-home':'Home','screen-new-reading':'New Reading','screen-reveal':'Card Reveal','screen-interpretation':'AI Interpretation','screen-journal':'Journal','screen-readings':'Readings','screen-insights':'Insights','screen-subscription':'Subscription','screen-profile':'Profile'};
+  const lbl=document.getElementById('screen-label');
+  if(lbl)lbl.textContent=labels[id]||id;
+}
+
+function toggleChip(el){el.classList.toggle('selected');}
+
+function selectMood(el){
+  el.closest('#screen-new-reading').querySelectorAll('[onclick="selectMood(this)"]').forEach(m=>{
+    const d=m.querySelector('div');
+    if(d){d.style.background='var(--surface)';d.style.border='0.5px solid rgba(255,255,255,0.06)';}
+    m.querySelector('div:last-child').style.color='var(--mist)';
+  });
+  const d=el.querySelector('div');
+  if(d){d.style.background='rgba(201,168,76,0.12)';d.style.border='1.5px solid var(--gold)';}
+  el.querySelector('div:last-child').style.color='var(--gold)';
+}
+
+function makeStars(id,count){
+  const c=document.getElementById(id);
+  if(!c)return;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.setProperty('--d',(2+Math.random()*4)+'s');
+    s.style.animationDelay=Math.random()*4+'s';
+    s.style.width=s.style.height=(Math.random()>0.7?3:2)+'px';
+    c.appendChild(s);
+  }
+}
+makeStars('stars-welcome',60);
+makeStars('stars-ob1',40);
+makeStars('stars-ob2',40);
+makeStars('stars-ob3',40);
+makeStars('stars-reveal',80);
+makeStars('stars-sub',50);
+
+goto('screen-welcome');
+</script>
+</body>
+</html>

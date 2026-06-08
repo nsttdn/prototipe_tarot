@@ -1,0 +1,18 @@
+### Created by assistant
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Build
+dist/
+build/
